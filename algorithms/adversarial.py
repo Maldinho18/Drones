@@ -88,7 +88,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
             
             v = float("inf")
             for a in acciones:
-                succ = state.generate_successor(agente_index, a)
+                succ = s.generate_successor(agente_index, a)
                 siguiente = (agente_index + 1) % num_agentes
                 siguiente_d = d - 1 if siguiente == 0 else d
                 v = min(v, valor(succ, siguiente, siguiente_d))
