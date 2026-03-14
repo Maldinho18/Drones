@@ -146,7 +146,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
 
             siguiente = (agente_index + 1) % num_agentes
 
-            # MAX (drone)
+    
             if agente_index == 0:
                 v = float("-inf")
 
@@ -156,14 +156,14 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
 
                     v = max(v, valor(succ, siguiente, siguiente_d, alpha, beta))
 
-                    if v > beta:  # poda estricta
+                    if v > beta:  
                         return v
 
                     alpha = max(alpha, v)
 
                 return v
 
-            # MIN (hunters)
+           
             v = float("inf")
 
             for a in acciones:
@@ -172,7 +172,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
 
                 v = min(v, valor(succ, siguiente, siguiente_d, alpha, beta))
 
-                if v < alpha:  # poda estricta
+                if v < alpha: 
                     return v
 
                 beta = min(beta, v)
