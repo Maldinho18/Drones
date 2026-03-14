@@ -87,7 +87,7 @@ def backtracking_fc(csp: DroneAssignmentCSP) -> dict[str, str] | None:
       
       var = no_asignado[0]
       
-      for valor in list(csp.domanins[var]):
+      for valor in list(csp.domains[var]):
         if csp.is_consistent(var, valor, asignacion):
           csp.assign(var, valor, asignacion)
           
