@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from algorithms.utils import bfs_distance, dijkstra
 
 if TYPE_CHECKING:
     from world.game_state import GameState
-
 
 def evaluation_function(state: GameState) -> float:
     """
@@ -41,5 +41,70 @@ def evaluation_function(state: GameState) -> float:
     - Consider edge cases: no pending deliveries, no hunters nearby.
     - A good evaluation function balances delivery progress with hunter avoidance.
     """
-    # TODO: Implement your code here
-    return 0.0
+    if state.is_win():
+        return 1000
+    if state.is_lose():
+        return -1000
+
+    pos_dron = state.get_drone_position()
+    posiciones_cazadores = state.get_hunter_positions()
+    entregas = state.get_pending_deliveries()
+    layout = state.get_layout()
+
+    score_actual = state.get_score()
+
+    valor = score_actual
+
+    if entregas:
+
+        dist_entregas = []
+
+        for e in entregas:
+            dist = bfs_distance(layout, pos_dron, e, hunter_restricted=False)
+            if dist != float("inf"):
+                dist_entregas.append(dist)
+
+        if dist_entregas:
+            entrega_mas_cercana = min(dist_entregas)
+
+            
+            valor += 30 / (entrega_mas_cercana + 1)
+
+      
+        valor -= 40 * len(entregas)
+
+
+    for c in posiciones_cazadores:
+
+        dist = bfs_distance(layout, c, pos_dron, hunter_restricted=True)
+
+        if dist == float("inf"):
+            continue
+
+       
+        if dist <= 1:
+            valor -= 500
+
+        elif dist <= 2:
+            valor -= 200
+
+        else:
+            valor += dist * 2
+
+
+    if entregas:
+
+        costos = []
+
+        for e in entregas:
+            costo, _ = dijkstra(layout, pos_dron, e)
+            if costo != float("inf"):
+                costos.append(costo)
+
+        if costos:
+            mejor_costo = min(costos)
+
+         
+            valor += 20 / (mejor_costo + 1)
+
+    return float(valor)
