@@ -130,8 +130,76 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         - Update beta at MIN nodes: beta = min(beta, value).
         - Pass alpha and beta through the recursive calls.
         """
-        # TODO: Implement your code here (BONUS)
-        return None
+        num_agentes = state.get_num_agents()
+
+        def terminal_profundidad(s: GameState, d: int) -> bool:
+            return d == 0 or s.is_win() or s.is_lose()
+
+        def valor(s: GameState, agente_index: int, d: int, alpha: float, beta: float) -> float:
+
+            if terminal_profundidad(s, d):
+                return float(self.evaluation_function(s))
+
+            acciones = s.get_legal_actions(agente_index)
+            if not acciones:
+                return float(self.evaluation_function(s))
+
+            siguiente = (agente_index + 1) % num_agentes
+
+            # MAX (drone)
+            if agente_index == 0:
+                v = float("-inf")
+
+                for a in acciones:
+                    succ = s.generate_successor(agente_index, a)
+                    siguiente_d = d - 1 if siguiente == 0 else d
+
+                    v = max(v, valor(succ, siguiente, siguiente_d, alpha, beta))
+
+                    if v > beta:  # poda estricta
+                        return v
+
+                    alpha = max(alpha, v)
+
+                return v
+
+            # MIN (hunters)
+            v = float("inf")
+
+            for a in acciones:
+                succ = s.generate_successor(agente_index, a)
+                siguiente_d = d - 1 if siguiente == 0 else d
+
+                v = min(v, valor(succ, siguiente, siguiente_d, alpha, beta))
+
+                if v < alpha:  # poda estricta
+                    return v
+
+                beta = min(beta, v)
+
+            return v
+
+        mejor_accion = None
+        mejor_valor = float("-inf")
+
+        alpha = float("-inf")
+        beta = float("inf")
+
+        for a in state.get_legal_actions(0):
+            succ = state.generate_successor(0, a)
+
+            siguiente = 1 % num_agentes
+            siguiente_d = self.depth - 1 if siguiente == 0 else self.depth
+
+            v = valor(succ, siguiente, siguiente_d, alpha, beta)
+
+            if v > mejor_valor:
+                mejor_valor = v
+                mejor_accion = a
+
+            alpha = max(alpha, mejor_valor)
+
+        return mejor_accion
 
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
