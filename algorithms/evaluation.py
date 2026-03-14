@@ -104,7 +104,7 @@ def evaluation_function(state: GameState) -> float:
         if costos:
             mejor_costo = min(costos)
 
-            # rutas baratas son mejores
+         
             valor += 20 / (mejor_costo + 1)
 
     return float(valor)
