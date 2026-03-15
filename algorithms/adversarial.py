@@ -203,33 +203,55 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
 
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
-    """
-    Expectimax agent with a mixed hunter model.
-
-    Each hunter acts randomly with probability self.prob and greedily
-    (worst-case / MIN) with probability 1 - self.prob.
-
-    * When prob = 0:  behaves like Minimax (hunters always play optimally).
-    * When prob = 1:  pure expectimax (hunters always play uniformly at random).
-    * When 0 < prob < 1: weighted combination that correctly models the
-      actual MixedHunterAgent used at game-play time.
-
-    Chance node formula:
-        value = (1 - p) * min(child_values) + p * mean(child_values)
-    """
 
     def get_action(self, state: GameState) -> Directions | None:
-        """
-        Returns the best action for the drone using expectimax with mixed hunter model.
+        
+        num_agents = state.get_num_agents()
+        p = self.prob  # probabilidad de random uniforme en hunters
 
-        Tips:
-        - Drone nodes are MAX (same as Minimax).
-        - Hunter nodes are CHANCE with mixed model: the hunter acts greedily with
-          probability (1 - self.prob) and uniformly at random with probability self.prob.
-        - Mixed expected value = (1-p) * min(child_values) + p * mean(child_values).
-        - When p=0 this reduces to Minimax; when p=1 it is pure uniform expectimax.
-        - Do NOT prune in expectimax (unlike alpha-beta).
-        - self.prob is set via the constructor argument prob.
-        """
-        # TODO: Implement your code here
-        return None
+        def terminal_or_depth(s: GameState, d: int) -> bool:
+            return d == 0 or s.is_win() or s.is_lose()
+
+        def value(s: GameState, agent_index: int, d: int) -> float:
+            if terminal_or_depth(s, d):
+                return float(self.evaluation_function(s))
+
+            actions = s.get_legal_actions(agent_index)
+            if not actions:
+                return float(self.evaluation_function(s))
+
+            if agent_index == 0:
+                v = float("-inf")
+                for a in actions:
+                    succ = s.generate_successor(agent_index, a)
+                    next_agent = (agent_index + 1) % num_agents
+                    next_d = d - 1 if next_agent == 0 else d
+                    v = max(v, value(succ, next_agent, next_d))
+                return v
+
+            child_vals = []
+            for a in actions:
+                succ = s.generate_successor(agent_index, a)
+                next_agent = (agent_index + 1) % num_agents
+                next_d = d - 1 if next_agent == 0 else d
+                child_vals.append(value(succ, next_agent, next_d))
+
+            worst_case = min(child_vals)
+            mean_case = sum(child_vals) / len(child_vals)
+            return (1.0 - p) * worst_case + p * mean_case
+
+        best_action = None
+        best_val = float("-inf")
+
+        for a in state.get_legal_actions(0):
+            succ = state.generate_successor(0, a)
+            next_agent = 1 % num_agents
+            next_d = self.depth - 1 if next_agent == 0 else self.depth
+            v = value(succ, next_agent, next_d)
+
+            if v > best_val:
+                best_val = v
+                best_action = a
+
+        return best_action
+        
